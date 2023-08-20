@@ -25,8 +25,7 @@ public class KiteDataServiceImpl implements KiteDataService {
                 script.getEndDate());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization",
-                "enctoken zkJJf8bcHZR9jG5RlUPcDLwxhTqj1GQ2mA9VfiepIh8A+7s5Mx2zkQKCY2s7o+VAvPUEldrpole02slYF7CYY14D4i5/HXDK3lePpL/1PMFSJcvg2UHgPA==");
+        headers.add("Authorization",script.getAuth());
 
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);

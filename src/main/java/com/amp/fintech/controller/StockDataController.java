@@ -10,16 +10,11 @@ import com.amp.fintech.model.StockData;
 import com.amp.fintech.service.KiteDataService;
 
 @RestController
-@RequestMapping("test")
-public class hello {
+@RequestMapping("api")
+public class StockDataController {
 
     @Autowired
     private KiteDataService kiteDataService;
-
-    @GetMapping("/hello")
-    public String helloWold() {
-        return "Hello World!";
-    }
 
     @GetMapping("/GetData")
     public StockData getData() {
@@ -27,6 +22,13 @@ public class hello {
         return kiteDataService.geStockData(Script.builder()
                 .name("Nifty").apiKey("256265").startDate("2023-08-01").endDate("2023-08-20")
                 .build());
+
+    }
+
+    @GetMapping("/GetScriptData")
+    public StockData getScriptData(Script script) {
+
+        return kiteDataService.geStockData(script);
 
     }
 }
