@@ -25,7 +25,7 @@ public class hello {
     public StockData getData() {
 
         return kiteDataService.geStockData(Script.builder()
-                .name("Nifty").apiKey("263689").startDate("2023-08-15").endDate("2023-08-20")
+                .name("Nifty").apiKey("256265").startDate("2023-08-01").endDate("2023-08-20")
                 .build());
 
     }
