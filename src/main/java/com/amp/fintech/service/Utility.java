@@ -8,6 +8,8 @@ public class Utility {
 
     public final static String ZerodhaApiUrl = "https://kite.zerodha.com/oms/instruments/historical/{key}/5minute?user_id=BX3771&oi=1&from={from}&to={to}";
 
+    public final static String ZerodhaInstrumentUrl = "https://api.kite.trade/instruments/NFO";
+
     private final static SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public static String dateToString(Date date, String pattern) {
