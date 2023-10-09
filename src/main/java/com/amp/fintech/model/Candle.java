@@ -31,6 +31,6 @@ public class Candle implements Serializable {
   private double sma100;
   private double sma200;
 
-  private int volumeSma200;
+  private double volumeSma200;
   private double rsi;
 }

@@ -80,6 +80,7 @@ public class KiteDataServiceImpl implements KiteDataService {
                         stockData = setTechnicalIndicator(stockData, series, vseries);
                         return stockData;
                 } catch (Exception ex) {
+                        log.error("Exception", ex);
                         return null;
                 }
 
@@ -107,7 +108,7 @@ public class KiteDataServiceImpl implements KiteDataService {
                         candle.setSma50(Double.parseDouble(ema50.getValue(i).toString()));
                         candle.setSma100(Double.parseDouble(ema100.getValue(i).toString()));
                         candle.setSma200(Double.parseDouble(ema200.getValue(i).toString()));
-                        candle.setVolumeSma200(Integer.parseInt(shortSma.getValue(i).toString()));
+                        candle.setVolumeSma200(Double.parseDouble(shortSma.getValue(i).toString()));
                         candle.setRsi(Double.parseDouble(rsi.getValue(i).toString()));
                         stockData.getCandles().set(i, candle);
                 }
