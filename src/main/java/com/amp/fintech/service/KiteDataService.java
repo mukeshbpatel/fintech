@@ -13,5 +13,7 @@ public interface KiteDataService {
 
     List<StockData> geStockData(List<Script> script);
 
-    List<Instrument> csvToMap(String file);
+    List<Instrument> csvToMap(String weeklyExpiry,String  monthlyExpiry);
+
+    List<StockData> geLiveData(String weeklyExpiry,String  monthlyExpiry);
 }

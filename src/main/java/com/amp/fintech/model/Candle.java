@@ -1,7 +1,7 @@
 package com.amp.fintech.model;
 
 import java.io.Serializable;
-
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -17,7 +17,7 @@ import lombok.extern.jackson.Jacksonized;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Candle implements Serializable {
   private int rank;
-  private String date;
+  private LocalDateTime date;
   private double open;
   private double high;
   private double low;
@@ -30,4 +30,7 @@ public class Candle implements Serializable {
   private double sma50;
   private double sma100;
   private double sma200;
+
+  private int volumeSma200;
+  private double rsi;
 }

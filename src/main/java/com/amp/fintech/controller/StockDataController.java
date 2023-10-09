@@ -41,13 +41,19 @@ public class StockDataController {
     }
 
     @GetMapping("/GetCsvData")
-    public List<Instrument> getCsvData(String fileName) {
-        return kiteDataService.csvToMap(fileName);
+    public List<Instrument> getCsvData(String weeklyExpiry, String monthlyExpiry) {
+        return kiteDataService.csvToMap(weeklyExpiry, monthlyExpiry);
     }
 
     @RequestMapping("/GetScriptDatas")
     public List<StockData> getScriptData(@RequestBody List<Script> scripts) {
         List<StockData> stockDatas = kiteDataService.geStockData(scripts);
+        return stockDatas;
+    }
+
+    @GetMapping("/GetLiveDatas")
+    public List<StockData> getLiveData(String weeklyExpiry, String monthlyExpiry) {
+        List<StockData> stockDatas = kiteDataService.geLiveData(weeklyExpiry, monthlyExpiry);
         return stockDatas;
 
     }
