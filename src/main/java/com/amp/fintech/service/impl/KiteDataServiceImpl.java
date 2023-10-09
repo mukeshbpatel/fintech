@@ -77,35 +77,41 @@ public class KiteDataServiceImpl implements KiteDataService {
 
                         // stockData.updateSMA();
 
-                        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-                        ClosePriceIndicator vclosePrice = new ClosePriceIndicator(vseries);
-
-                        EMAIndicator ema9 = new EMAIndicator(closePrice, 9);
-                        EMAIndicator ema20 = new EMAIndicator(closePrice, 20);
-                        EMAIndicator ema50 = new EMAIndicator(closePrice, 50);
-                        EMAIndicator ema100 = new EMAIndicator(closePrice, 100);
-                        EMAIndicator ema200 = new EMAIndicator(closePrice, 200);
-
-                        SMAIndicator shortSma = new SMAIndicator(vclosePrice, 200);
-
-                        RSIIndicator rsi = new RSIIndicator(closePrice, 14);
-
-                        final int bars = series.getBarCount();
-                        for (int i = 0; i < bars; i++) {
-                                // try {
-                                stockData.getCandles().get(i).setSma9(Double.parseDouble(ema9.getValue(i).toString()));
-                                stockData.getCandles().get(i).setSma20(Double.parseDouble(ema20.getValue(i).toString()));
-                                stockData.getCandles().get(i).setSma50(Double.parseDouble(ema50.getValue(i).toString()));
-                                stockData.getCandles().get(i).setSma100(Double.parseDouble(ema100.getValue(i).toString()));
-                                stockData.getCandles().get(i).setSma200(Double.parseDouble(ema200.getValue(i).toString()));
-                                stockData.getCandles().get(i).setVolumeSma200(Integer.parseInt(shortSma.getValue(i).toString()));
-                                stockData.getCandles().get(i).setRsi(Double.parseDouble(rsi.getValue(i).toString()));
-                        }
+                        stockData = setTechnicalIndicator(stockData, series, vseries);
                         return stockData;
                 } catch (Exception ex) {
                         return null;
                 }
 
+        }
+
+        private StockData setTechnicalIndicator(StockData stockData, BarSeries series, BarSeries vseries) {
+                ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+                ClosePriceIndicator vclosePrice = new ClosePriceIndicator(vseries);
+
+                EMAIndicator ema9 = new EMAIndicator(closePrice, 9);
+                EMAIndicator ema20 = new EMAIndicator(closePrice, 20);
+                EMAIndicator ema50 = new EMAIndicator(closePrice, 50);
+                EMAIndicator ema100 = new EMAIndicator(closePrice, 100);
+                EMAIndicator ema200 = new EMAIndicator(closePrice, 200);
+
+                SMAIndicator shortSma = new SMAIndicator(vclosePrice, 200);
+
+                RSIIndicator rsi = new RSIIndicator(closePrice, 14);
+
+                final int bars = series.getBarCount();
+                for (int i = 0; i < bars; i++) {
+                        var candle = stockData.getCandles().get(i);
+                        candle.setSma9(Double.parseDouble(ema9.getValue(i).toString()));
+                        candle.setSma20(Double.parseDouble(ema20.getValue(i).toString()));
+                        candle.setSma50(Double.parseDouble(ema50.getValue(i).toString()));
+                        candle.setSma100(Double.parseDouble(ema100.getValue(i).toString()));
+                        candle.setSma200(Double.parseDouble(ema200.getValue(i).toString()));
+                        candle.setVolumeSma200(Integer.parseInt(shortSma.getValue(i).toString()));
+                        candle.setRsi(Double.parseDouble(rsi.getValue(i).toString()));
+                        stockData.getCandles().set(i, candle);
+                }
+                return stockData;
         }
 
         @Override
