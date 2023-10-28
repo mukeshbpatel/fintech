@@ -20,4 +20,5 @@ public class Script implements Serializable {
     private final String startDate;
     private final String endDate;
     private final String timeFrame;
+    private final boolean fillTechnicalAnalysis;
 }

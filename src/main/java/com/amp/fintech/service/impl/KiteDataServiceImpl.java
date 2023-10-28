@@ -36,7 +36,6 @@ import com.amp.fintech.model.KiteData.KiteResponse;
 import com.amp.fintech.service.KiteDataService;
 import com.amp.fintech.service.Utility;
 import com.amp.fintech.utility.DateUtil;
-import com.amp.fintech.utility.JsonUtil;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.*;
 
@@ -71,19 +70,20 @@ public class KiteDataServiceImpl implements KiteDataService {
                                         .script(script)
                                         .build();
 
-                        BarSeries series = new BaseBarSeriesBuilder().withName(script.getName()).build();
-                        BarSeries vseries = new BaseBarSeriesBuilder().withName("V" + script.getName()).build();
-                        stockData.getCandles().forEach(c -> {
-                                series.addBar(c.getDate().atZone(ZoneId.systemDefault()),
-                                                c.getOpen(), c.getHigh(), c.getLow(), c.getClose(), c.getVolume());
-                                vseries.addBar(c.getDate().atZone(ZoneId.systemDefault()),
-                                                c.getVolume(), c.getVolume(), c.getVolume(), c.getVolume(),
-                                                c.getVolume());
-                        });
-
-                        // stockData.updateSMA();
-
-                        stockData = setTechnicalIndicator(stockData, series, vseries);
+                        if (script.isFillTechnicalAnalysis()) {
+                                BarSeries series = new BaseBarSeriesBuilder().withName(script.getName()).build();
+                                BarSeries vseries = new BaseBarSeriesBuilder().withName("V" + script.getName()).build();
+                                stockData.getCandles().forEach(c -> {
+                                        series.addBar(c.getDate().atZone(ZoneId.systemDefault()),
+                                                        c.getOpen(), c.getHigh(), c.getLow(), c.getClose(),
+                                                        c.getVolume());
+                                        vseries.addBar(c.getDate().atZone(ZoneId.systemDefault()),
+                                                        c.getVolume(), c.getVolume(), c.getVolume(), c.getVolume(),
+                                                        c.getVolume());
+                                });
+                                // stockData.updateSMA();
+                                stockData = setTechnicalIndicator(stockData, series, vseries);
+                        }
                         return stockData;
                 } catch (Exception ex) {
                         log.error("Exception", ex);
@@ -152,6 +152,8 @@ public class KiteDataServiceImpl implements KiteDataService {
                                         && f.getExpiry().equals(monthlyExpiry))
                                         .collect(Collectors.toList());
 
+                        log.info("Future List count {}", futureList.size());
+
                         // Get Future - Equity
                         List<String> equities = futureList.stream().map(Instrument::getName).distinct()
                                         .collect(Collectors.toList());
@@ -161,12 +163,16 @@ public class KiteDataServiceImpl implements KiteDataService {
                                         && equities.contains(f.getTradingsymbol()))
                                         .collect(Collectors.toList());
 
+                        log.info("Equity List count {}", equityList.size());
+
                         // Get index List (Nifty, Bank, Fin)
                         List<Instrument> indexList = list.stream().filter(f -> f.getSegment().equals("INDICES")
                                         && f.getExchange().equals("NSE")
                                         && (f.getName().equals("NIFTY 50") || f.getName().equals("NIFTY BANK")
                                                         || f.getName().equals("NIFTY FIN SERVICE")))
                                         .collect(Collectors.toList());
+
+                        log.info("Index List count {}", indexList.size());
 
                         // Get Future List
                         List<Instrument> optionList = list.stream().filter(f -> f.getSegment().equals("NFO-OPT")
@@ -200,6 +206,8 @@ public class KiteDataServiceImpl implements KiteDataService {
                                 result.add(index);
                         });
 
+                        log.info("Index option list completed");
+
                         equityList.forEach(equity -> {
                                 List<Instrument> eqyList = futureList.stream()
                                                 .filter(f -> f.getName().equals(equity.getTradingsymbol()))
@@ -215,55 +223,15 @@ public class KiteDataServiceImpl implements KiteDataService {
                                                 .startDate(DateUtil.getCurrentDate(-7))
                                                 .endDate(DateUtil.getCurrentDate())
                                                 .timeFrame("day")
-                                                .build(),weeklyExpiry, monthlyExpiry));
+                                                .build(), weeklyExpiry, monthlyExpiry));
 
                                 result.add(equity);
 
                         });
 
+                        log.info("Stock option list completed");
+
                         return result;
-
-                        // List<Instrument> filteredList = list.stream().filter(f ->
-                        // ((f.getExchange().equals("NSE")
-                        // && f.getName().equals("NIFTY 50") && f.getInstrument_type().equals("EQ")) ||
-                        // (f.getExchange().equals("NSE") && f.getName().equals("NIFTY BANK")
-                        // && f.getInstrument_type().equals("EQ"))
-                        // ||
-                        // (f.getExchange().equals("NFO") && f.getExpiry().equals(monthlyExpiry)
-                        // && f.getName().equals("NIFTY")
-                        // && f.getInstrument_type().equals("FUT"))
-                        // ||
-                        // (f.getExchange().equals("NFO") && f.getExpiry().equals(monthlyExpiry)
-                        // && f.getName().equals("BANKNIFTY")
-                        // && f.getInstrument_type().equals("FUT"))
-                        // ||
-                        // (f.getExchange().equals("NFO") && f.getExpiry().equals(monthlyExpiry)
-                        // && f.getName().equals("NIFTY") && f.getStrike() >= 19400
-                        // && f.getStrike() <= 19700)
-                        // ||
-                        // (f.getExchange().equals("NFO") && f.getExpiry().equals(monthlyExpiry)
-                        // && f.getName().equals("BANKNIFTY") && f.getStrike() >= 43500
-                        // && f.getStrike() <= 44400)))
-                        // .collect(Collectors.toList());
-
-                        // filteredList.addAll(extractOption(list,Script.builder()
-                        // .apiKey("256265")
-                        // .name("NIFTY")
-                        // .startDate(DateUtil.addDays(weeklyExpiry, -7))
-                        // .endDate(weeklyExpiry)
-                        // .build()));
-
-                        // filteredList.addAll(extractOption(list,Script.builder()
-                        // .apiKey("260105")
-                        // .name("BANKNIFTY")
-                        // .startDate(DateUtil.addDays(weeklyExpiry, -8))
-                        // .endDate(DateUtil.addDays(weeklyExpiry,-1))
-                        // .build()));
-
-                        // return filteredList.stream()
-                        // .sorted((object1, object2) -> object1.getSegment()
-                        // .compareTo(object2.getSegment()))
-                        // .toList();
 
                 } catch (Exception e) {
                         e.printStackTrace();
@@ -271,54 +239,44 @@ public class KiteDataServiceImpl implements KiteDataService {
                 }
         }
 
-        private List<Instrument> extractOption(List<Instrument> list, Script script, String weeklyExpiry, String monthlyExpiry) {
-                double multi = 5;
+        private List<Instrument> extractOption(List<Instrument> list, Script script, String weeklyExpiry,
+                        String monthlyExpiry) {
                 StockData stockData = geStockData(script);
                 List<Instrument> result = new ArrayList<>();
 
                 if (stockData.getCandles() != null && !stockData.getCandles().isEmpty()) {
 
                         Candle candle = stockData.getCandles().get(stockData.getCandles().size() - 1);
-                        log.info("{} : {} ", stockData.getScript().getName(), JsonUtil.objectToJson(candle));
-
-                        if (candle.getClose() >= 25000) {
-                                multi = 200;
-                        } else if (candle.getClose() >= 10000) {
-                                multi = 100;
-                        } else if (candle.getClose() >= 5000) {
-                                multi = 50;
-                        } else if (candle.getClose() >= 2000) {
-                                multi = 50;
-                        } else if (candle.getClose() >= 900) {
-                                multi = 25;
-                        } else if (candle.getClose() >= 500) {
-                                multi = 10;
-                        } else if (candle.getClose() >= 200) {
-                                multi = 5;
-                        }
+                        log.info("{} : Close {} ", stockData.getScript().getName(), candle.getClose());
 
                         String exp = monthlyExpiry;
                         if (!weeklyExpiry.equals(monthlyExpiry) && script.getName().equals("BANKNIFTY")) {
                                 exp = DateUtil.addDays(weeklyExpiry, -1);
-                        } if (!weeklyExpiry.equals(monthlyExpiry) && script.getName().equals("FINNIFTY")) {
+                        }
+                        if (!weeklyExpiry.equals(monthlyExpiry) && script.getName().equals("FINNIFTY")) {
                                 exp = DateUtil.addDays(weeklyExpiry, -2);
                         } else if (!weeklyExpiry.equals(monthlyExpiry) && script.getName().equals("NIFTY")) {
                                 exp = weeklyExpiry;
                         }
 
-                        final double multiplier = multi;
                         final String expiry = exp;
 
                         List<Instrument> fullList = list.stream().filter(f -> f.getSegment().equals("NFO-OPT")
                                         && f.getName().equals(stockData.getScript().getName())
                                         && f.getExpiry().equals(expiry)).collect(Collectors.toList());
 
-                        result.addAll(fullList.stream().filter(f-> f.getStrike() >= candle.getClose()).limit(4).collect(Collectors.toList()));
+                        result.addAll(fullList.stream().filter(f -> f.getStrike() >= candle.getClose()).limit(4)
+                                        .collect(Collectors.toList()));
 
-                        result.addAll(fullList.stream().sorted((object1, object2) -> object2.getStrike().compareTo(object1.getStrike()))
-                                        .filter(f-> f.getStrike() <= candle.getClose()).limit(4).collect(Collectors.toList()));
+                        result.addAll(fullList.stream()
+                                        .sorted((object1, object2) -> object2.getStrike()
+                                                        .compareTo(object1.getStrike()))
+                                        .filter(f -> f.getStrike() <= candle.getClose()).limit(4)
+                                        .collect(Collectors.toList()));
 
-                        return result.stream().sorted((object1, object2) -> object1.getStrike().compareTo(object2.getStrike())).toList();
+                        return result.stream().sorted(
+                                        (object1, object2) -> object1.getStrike().compareTo(object2.getStrike()))
+                                        .toList();
                 } else {
                         return null;
                 }
