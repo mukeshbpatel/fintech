@@ -318,7 +318,7 @@ public class KiteDataServiceImpl implements KiteDataService {
                         result.addAll(fullList.stream().sorted((object1, object2) -> object2.getStrike().compareTo(object1.getStrike()))
                                         .filter(f-> f.getStrike() <= candle.getClose()).limit(4).collect(Collectors.toList()));
 
-                        return result;
+                        return result.stream().sorted((object1, object2) -> object1.getStrike().compareTo(object2.getStrike())).toList();
                 } else {
                         return null;
                 }
