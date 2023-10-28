@@ -42,7 +42,7 @@ public class StockDataController {
 
     @GetMapping("/GetCsvData")
     public List<Instrument> getCsvData(String weeklyExpiry, String monthlyExpiry) {
-        return kiteDataService.csvToMap(weeklyExpiry, monthlyExpiry);
+        return kiteDataService.getInstruments(weeklyExpiry, monthlyExpiry);
     }
 
     @RequestMapping("/GetScriptDatas")

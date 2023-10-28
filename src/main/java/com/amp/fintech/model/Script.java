@@ -15,9 +15,9 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Script implements Serializable {
-    private final String auth;
     private final String name;
     private final String apiKey;
     private final String startDate;
     private final String endDate;
+    private final String timeFrame;
 }

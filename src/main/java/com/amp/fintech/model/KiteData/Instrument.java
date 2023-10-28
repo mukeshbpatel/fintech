@@ -3,7 +3,7 @@ package com.amp.fintech.model.KiteData;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,4 +50,10 @@ public class Instrument implements Serializable {
 
     @JsonProperty(value = "exchange")
     private String exchange;
+
+    @JsonProperty(value = "future")
+    private Instrument future;
+
+    @JsonProperty(value = "options")
+    private List<Instrument> option;
 }
