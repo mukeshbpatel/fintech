@@ -1,10 +1,14 @@
 package com.amp.fintech.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,27 +34,34 @@ public class StockDataController {
     }
 
     @GetMapping("/GetScriptData")
-    public StockData getScriptData(Script script) {
-
-        return kiteDataService.geStockData(script);
-
+    public ResponseEntity<StockData> getScriptData(@RequestHeader(value = "Authorization", required = true) String authorization, Script script) {
+        kiteDataService.setAuthorization(authorization);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(kiteDataService.geStockData(script));
     }
 
     @GetMapping("/getInstruments")
-    public List<Instrument> getInstruments(String weeklyExpiry, String monthlyExpiry) {
-        return kiteDataService.getInstruments(weeklyExpiry, monthlyExpiry);
+    public ResponseEntity<List<Instrument>> getInstruments(@RequestHeader(value = "Authorization", required = true) String authorization, String weeklyExpiry, String monthlyExpiry) {
+        kiteDataService.setAuthorization(authorization);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(kiteDataService.getInstruments(weeklyExpiry, monthlyExpiry));
     }
 
     @RequestMapping("/GetScriptDatas")
-    public List<StockData> getScriptData(@RequestBody List<Script> scripts) {
+    public ResponseEntity<List<StockData>> getScriptData(@RequestHeader(value = "Authorization", required = true) String authorization, @RequestBody List<Script> scripts) {
+        kiteDataService.setAuthorization(authorization);
         List<StockData> stockDatas = kiteDataService.geStockData(scripts);
-        return stockDatas;
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(stockDatas);
     }
 
     @GetMapping("/GetLiveDatas")
-    public List<StockData> getLiveData(String weeklyExpiry, String monthlyExpiry) {
+    public ResponseEntity<List<StockData>> getLiveData(
+            @RequestHeader(value = "Authorization", required = true) String authorization, String weeklyExpiry, String monthlyExpiry) {
+        kiteDataService.setAuthorization(authorization);
         List<StockData> stockDatas = kiteDataService.geLiveData(weeklyExpiry, monthlyExpiry);
-        return stockDatas;
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(stockDatas);
 
     }
 }

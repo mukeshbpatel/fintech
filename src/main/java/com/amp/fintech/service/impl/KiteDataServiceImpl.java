@@ -49,7 +49,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class KiteDataServiceImpl implements KiteDataService {
 
-        private final String auth = "enctoken dgk5Yj4V7s6MWBph3pQ+aQrC0vUTwvXwTPss9NHrI6XB1WDpbfn+QKATuO8hN9myohuFTDM0CHP4nveEVNlrm3XN1s+kz8xPXH5Anqci5bGX+RlUalxrRw==";
+        private String auth = null;
+
+        @Override
+        public String getAuthorization() {
+                return auth;
+        }
+
+        @Override
+        public void setAuthorization(String authorization) {
+                auth = authorization;
+        }
 
         @Override
         public List<Quotes> getQuotes(List<Instrument> instruments) {

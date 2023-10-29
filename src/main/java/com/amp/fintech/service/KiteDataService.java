@@ -9,6 +9,11 @@ import com.amp.fintech.model.KiteData.Quotes;
 
 
 public interface KiteDataService {
+
+    String getAuthorization();
+
+    void setAuthorization(String authorization);
+
     StockData geStockData(Script script);
 
     List<Quotes> getQuotes(List<Instrument> instruments);
