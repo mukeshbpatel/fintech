@@ -41,14 +41,14 @@ public class StockDataController {
     }
 
     @GetMapping("/getInstruments")
-    public ResponseEntity<List<Instrument>> getInstruments(String authorization, String weeklyExpiry, String monthlyExpiry) {
+    public ResponseEntity<List<Instrument>> getInstruments(@RequestHeader(value = "Authorization", required = true) String authorization, String weeklyExpiry, String monthlyExpiry) {
         kiteDataService.setAuthorization(authorization);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(kiteDataService.getInstruments(weeklyExpiry, monthlyExpiry));
     }
 
     @RequestMapping("/GetScriptDatas")
-    public ResponseEntity<List<StockData>> getScriptData(String authorization, @RequestBody List<Script> scripts) {
+    public ResponseEntity<List<StockData>> getScriptData(@RequestHeader(value = "Authorization", required = true) String authorization, @RequestBody List<Script> scripts) {
         kiteDataService.setAuthorization(authorization);
         List<StockData> stockDatas = kiteDataService.geStockData(scripts);
         return ResponseEntity.status(HttpStatus.OK)
@@ -56,7 +56,8 @@ public class StockDataController {
     }
 
     @GetMapping("/GetLiveDatas")
-    public ResponseEntity<List<StockData>> getLiveData(String authorization, String weeklyExpiry, String monthlyExpiry) {
+    public ResponseEntity<List<StockData>> getLiveData(
+            @RequestHeader(value = "Authorization", required = true) String authorization, String weeklyExpiry, String monthlyExpiry) {
         kiteDataService.setAuthorization(authorization);
         List<StockData> stockDatas = kiteDataService.geLiveData(weeklyExpiry, monthlyExpiry);
         return ResponseEntity.status(HttpStatus.OK)
