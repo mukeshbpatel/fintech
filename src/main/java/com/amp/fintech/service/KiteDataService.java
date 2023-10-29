@@ -5,10 +5,13 @@ import java.util.List;
 import com.amp.fintech.model.Script;
 import com.amp.fintech.model.StockData;
 import com.amp.fintech.model.KiteData.Instrument;
+import com.amp.fintech.model.KiteData.Quotes;
 
 
 public interface KiteDataService {
     StockData geStockData(Script script);
+
+    List<Quotes> getQuotes(List<Instrument> instruments);
 
     List<StockData> geStockData(List<Script> script);
 

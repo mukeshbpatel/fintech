@@ -33,10 +33,14 @@ import com.amp.fintech.model.Script;
 import com.amp.fintech.model.StockData;
 import com.amp.fintech.model.KiteData.Instrument;
 import com.amp.fintech.model.KiteData.KiteResponse;
+import com.amp.fintech.model.KiteData.Quotes;
 import com.amp.fintech.service.KiteDataService;
 import com.amp.fintech.service.Utility;
 import com.amp.fintech.utility.DateUtil;
+import com.amp.fintech.utility.JsonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +49,48 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class KiteDataServiceImpl implements KiteDataService {
 
-        private final String auth = "enctoken 7SRtzurT0dqw2FJwsZfMfZkBD4KD6baw4kV6KhAWiENQ7qlaTARuk+WRr7DLU7HhciT/TyW1Xbycmwqjf9smZBUOZpLmXs/WvXHlfXU5zoZ7U1YdBLb8PQ==";
+        private final String auth = "enctoken dgk5Yj4V7s6MWBph3pQ+aQrC0vUTwvXwTPss9NHrI6XB1WDpbfn+QKATuO8hN9myohuFTDM0CHP4nveEVNlrm3XN1s+kz8xPXH5Anqci5bGX+RlUalxrRw==";
+
+        @Override
+        public List<Quotes> getQuotes(List<Instrument> instruments) {
+                try {
+                        StringBuilder uri = new StringBuilder();
+                        uri.append(Utility.ZerodhaQuotesUrl);
+                        instruments.forEach(instrument-> {
+                                uri.append("i=" + instrument.getExchange() + ":" + instrument.getTradingsymbol()  + "&");
+                        });
+
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.add("Authorization", auth);
+                        RestTemplate restTemplate = new RestTemplate();
+                        HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
+                        ResponseEntity<String> response = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity,String.class);
+                        String kiteResponse = response.getBody()
+                                                .replace("{\"status\":\"success\",\"data\":{","[")
+                                                .replace("}}}}","}}]").replace("NSE:","");
+
+                        
+                        for(int i=0; i< instruments.size(); i++) {
+                                Instrument instrument = instruments.get(i);
+                                kiteResponse = kiteResponse.replace("\"" + instrument.getTradingsymbol()  + "\":{\"instrument_token\":", "{\"instrument\":\"" + instrument.getTradingsymbol()  + "\",\"instrument_token\":");
+                        } 
+                        
+                        ObjectMapper mapper = JsonUtil.getMapper();
+                        List<Quotes> result = mapper.readValue(kiteResponse,new TypeReference<List<Quotes>> () {});
+                        instruments.forEach(instrument-> {
+                                List<Quotes> quotes = result.stream().filter(f-> f.getInstrumentToken().equals(instrument.getInstrument_token())).toList();
+                                if (quotes!=null && !quotes.isEmpty()) {
+                                        instrument.setQuotes(quotes.get(0));
+                                }
+                        });
+
+                        return result;
+
+                } catch (Exception ex) {
+                        log.error("Exception", ex);
+                        return null;
+                }
+        }
 
         @Override
         public StockData geStockData(Script script) {
@@ -58,11 +103,9 @@ public class KiteDataServiceImpl implements KiteDataService {
 
                         HttpHeaders headers = new HttpHeaders();
                         headers.add("Authorization", auth);
-
                         RestTemplate restTemplate = new RestTemplate();
                         HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
-                        ResponseEntity<KiteResponse> response = restTemplate.exchange(uri, HttpMethod.GET, entity,
-                                        KiteResponse.class);
+                        ResponseEntity<KiteResponse> response = restTemplate.exchange(uri, HttpMethod.GET, entity,KiteResponse.class);
                         KiteResponse kiteResponse = response.getBody();
 
                         StockData stockData = StockData.builder()
@@ -138,14 +181,19 @@ public class KiteDataServiceImpl implements KiteDataService {
                         URL src = new URL(Utility.ZerodhaInstrumentUrl);
                         CsvSchema csv = CsvSchema.emptySchema().withHeader();
                         CsvMapper csvMapper = new CsvMapper();
+                        
+                        log.info("Getting Intrument list from Kite API");
                         MappingIterator<Instrument> mappingIterator = csvMapper.reader().forType(Instrument.class)
                                         .with(csv).readValues(src);
+                        log.info("Intrument list sucessfully downloaded");
 
                         List<Instrument> result = new ArrayList<>();
 
                         List<Instrument> list = mappingIterator.readAll().stream()
                                         .filter(f -> f.getExchange().equals("NSE") || f.getExchange().equals("NFO"))
                                         .collect(Collectors.toList());
+                        
+                        log.info("Full List count {}", list.size());
 
                         // Get Future List
                         List<Instrument> futureList = list.stream().filter(f -> f.getSegment().equals("NFO-FUT")
@@ -179,6 +227,9 @@ public class KiteDataServiceImpl implements KiteDataService {
                                         && f.getExpiry().startsWith(monthlyExpiry.substring(0, 7)))
                                         .collect(Collectors.toList());
 
+                        getQuotes(indexList);
+                        log.info("Index Quotes count {}", indexList.size());
+
                         indexList.forEach(index -> {
                                 if (index.getName().equals("NIFTY 50")) {
                                         index.setName("NIFTY");
@@ -202,11 +253,14 @@ public class KiteDataServiceImpl implements KiteDataService {
                                                 .startDate(DateUtil.getCurrentDate(-7))
                                                 .endDate(DateUtil.getCurrentDate())
                                                 .timeFrame("day")
-                                                .build(), weeklyExpiry, monthlyExpiry));
+                                                .build(), weeklyExpiry, monthlyExpiry, index));
                                 result.add(index);
                         });
 
                         log.info("Index option list completed");
+                        
+                        getQuotes(equityList);
+                        log.info("Stock Quotes count {}", equityList.size());
 
                         equityList.forEach(equity -> {
                                 List<Instrument> eqyList = futureList.stream()
@@ -223,7 +277,7 @@ public class KiteDataServiceImpl implements KiteDataService {
                                                 .startDate(DateUtil.getCurrentDate(-7))
                                                 .endDate(DateUtil.getCurrentDate())
                                                 .timeFrame("day")
-                                                .build(), weeklyExpiry, monthlyExpiry));
+                                                .build(), weeklyExpiry, monthlyExpiry, equity));
 
                                 result.add(equity);
 
@@ -239,16 +293,24 @@ public class KiteDataServiceImpl implements KiteDataService {
                 }
         }
 
-        private List<Instrument> extractOption(List<Instrument> list, Script script, String weeklyExpiry,
-                        String monthlyExpiry) {
-                StockData stockData = geStockData(script);
+        private List<Instrument> extractOption(List<Instrument> list, Script script, String weeklyExpiry, String monthlyExpiry, Instrument instrument) {
+                
                 List<Instrument> result = new ArrayList<>();
+                double close = (double) 0;
+                
+                if (instrument.getQuotes()!=null && instrument.getQuotes().getLastPrice()>0) {
+                        close = instrument.getQuotes().getLastPrice();
+                } else {
 
+                StockData stockData = geStockData(script);
                 if (stockData.getCandles() != null && !stockData.getCandles().isEmpty()) {
 
                         Candle candle = stockData.getCandles().get(stockData.getCandles().size() - 1);
+                        close = candle.getClose();
                         log.info("{} : Close {} ", stockData.getScript().getName(), candle.getClose());
-
+                }
+        }
+                if (close>0) {
                         String exp = monthlyExpiry;
                         if (!weeklyExpiry.equals(monthlyExpiry) && script.getName().equals("BANKNIFTY")) {
                                 exp = DateUtil.addDays(weeklyExpiry, -1);
@@ -262,16 +324,17 @@ public class KiteDataServiceImpl implements KiteDataService {
                         final String expiry = exp;
 
                         List<Instrument> fullList = list.stream().filter(f -> f.getSegment().equals("NFO-OPT")
-                                        && f.getName().equals(stockData.getScript().getName())
+                                        && f.getName().equals(script.getName())
                                         && f.getExpiry().equals(expiry)).collect(Collectors.toList());
 
-                        result.addAll(fullList.stream().filter(f -> f.getStrike() >= candle.getClose()).limit(4)
+                        final Double fclose = close;
+                        result.addAll(fullList.stream().filter(f -> f.getStrike() >= fclose).limit(4)
                                         .collect(Collectors.toList()));
 
                         result.addAll(fullList.stream()
                                         .sorted((object1, object2) -> object2.getStrike()
                                                         .compareTo(object1.getStrike()))
-                                        .filter(f -> f.getStrike() <= candle.getClose()).limit(4)
+                                        .filter(f -> f.getStrike() <= fclose).limit(4)
                                         .collect(Collectors.toList()));
 
                         return result.stream().sorted(

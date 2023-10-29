@@ -51,6 +51,9 @@ public class Instrument implements Serializable {
     @JsonProperty(value = "exchange")
     private String exchange;
 
+    @JsonProperty(value = "quotes")
+    private Quotes quotes;
+    
     @JsonProperty(value = "future")
     private Instrument future;
 

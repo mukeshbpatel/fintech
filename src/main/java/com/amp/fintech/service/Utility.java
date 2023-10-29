@@ -3,13 +3,12 @@ package com.amp.fintech.service;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.TimeZone;
-
-import org.joda.time.LocalDate;
 
 public class Utility {
 
     public final static String ZerodhaApiUrl = "https://kite.zerodha.com/oms/instruments/historical/{key}/{timeFrame}?user_id=BX3771&oi=1&from={from}&to={to}";
+
+    public final static String ZerodhaQuotesUrl = "https://api.kite.trade/quote/ohlc?";  //i=NSE:INFY&i=BSE:SENSEX&i=NSE:NIFTY+50
 
     public final static String ZerodhaInstrumentUrl = "https://api.kite.trade/instruments";
 
